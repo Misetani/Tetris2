@@ -2,7 +2,7 @@
 C++ Tetris rewritten using FSM
 
 ## FSM
-
+```
           SHIFTING
              ^
              |
@@ -10,6 +10,7 @@ INITIAL -> MOVING -> PAUSE          GAME_OVER (may happen by attaching a figure 
              |
              v
           ATTACHING
+```
 
 MOVING state is the main state of the game in which all user input is handled. That is user
 can restart, pause, unpause, quit or move figure left, right or down. Every dozen or so iterations

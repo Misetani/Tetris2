@@ -54,6 +54,11 @@ void print_matrix(int** matrix, int h, int w) {
     }
 }
 
+
+/* ========================================================================= */
+/*                              Tetris Class                                 */
+/* ========================================================================= */
+
 class Tetris {
 private:
     int** m_field;
@@ -66,11 +71,15 @@ private:
     int m_y{ 0 };
 
     RNG rng;
-    
-    bool playing = false;
-    bool paused = false;
-    bool attaching = false;
-    bool game_over = false;
+
+    enum States {
+        INITIAL,
+        MOVING,
+        SHIFTING,
+        ATTACHING,
+        PAUSE,
+        GAME_OVER
+    } state{ INITIAL };
 
 public:
     Tetris() {
@@ -88,23 +97,34 @@ public:
     void play() {
         render_game();
 
-        wait_for_start();
-
         int count = 0;
         int max_count = 20;
-        while (playing) {
+        while (state != GAME_OVER) {
             usleep(25000);
 
-            if (!paused && !game_over && ++count == max_count) {
-                shift_figure();
-
-                count = 0;
-            } else {
-                process_user_input();
+            switch (state) {
+                case INITIAL:
+                    wait_for_start();
+                    break;
+                case MOVING:
+                    process_user_input();
+                    break;
+                case SHIFTING:
+                    shift_figure();
+                    break;
+                case ATTACHING:
+                    attach_figure();
+                    break;
+                case PAUSE:
+                    process_user_input();
+                    break;
+                case GAME_OVER:
+                    break;
             }
 
-            if (is_figure_attached()) {
-                attach_figure();
+            if (state == MOVING && ++count == max_count) {
+                count = 0;
+                state = SHIFTING;
             }
 
             render_game();
@@ -123,14 +143,14 @@ private:
         clear_rows();
 
         if (is_game_over()) {
-            game_over = true;
+            state = GAME_OVER;
             render_game();
             wait_to_quit_or_restart();
         }
 
         spawn_figure();
 
-        attaching = false;
+        state = MOVING;
     }
 
     void clear_rows() {
@@ -178,9 +198,7 @@ private:
 
         init_game();
 
-        paused = false;
-        attaching = false;
-        game_over = false;
+        state = INITIAL;
     }
 
     bool is_game_over() {
@@ -191,12 +209,12 @@ private:
         char key = getch();
 
         if (key == 'q') {
-            playing = false;
+            state = GAME_OVER;
         } else if (key == 'r') {
             restart_game();
         } else if (key == 'p') {
-            paused = !paused;
-        } else if (!paused) {
+            state = (state == PAUSE) ? MOVING : PAUSE;
+        } else if (state != PAUSE && state != INITIAL) {
             if (key == 's') {
                 move_figure_down();
             } else if (key == 'a') {
@@ -205,6 +223,10 @@ private:
                 move_figure_right();
             } else if (key == 'w') {
                 rotate_figure();
+            }
+
+            if (is_figure_attached()) {
+                state = ATTACHING;
             }
         }
     }
@@ -259,7 +281,7 @@ private:
             }
         }
 
-        playing = true;
+        state = MOVING;
     }
 
     void wait_to_quit_or_restart() {
@@ -271,7 +293,7 @@ private:
             }
         }
 
-        playing = false;
+        state = GAME_OVER;
     }
 
     void spawn_figure() {
@@ -320,8 +342,9 @@ private:
     void shift_figure() {
         if (!is_figure_attached()) {
             m_y += 1;
+            state = MOVING;
         } else {
-            attaching = true;
+            state = ATTACHING;
         }
     }
 
@@ -399,23 +422,23 @@ private:
     }
 
     void render_game() {
-        if (playing) { add_figure_to_field(); }
+        if (state != INITIAL && state != GAME_OVER && state != PAUSE) { add_figure_to_field(); }
 
         WINDOW *game_window = newwin(m_height + 2, 3 * m_width + 2, 0, 0);
 
         refresh();
         box(game_window, 0, 0);
 
-        if (!playing) {
+        if (state == INITIAL) {
             mvwprintw(game_window, 1, 2, "[ENTER]   to start");
             mvwprintw(game_window, 2, 2, "[A][S][D] to move");
             mvwprintw(game_window, 3, 2, "[W]       to rotate");
             mvwprintw(game_window, 4, 2, "[R]       to restart");
             mvwprintw(game_window, 5, 2, "[Q]       to quit");
             mvwprintw(game_window, 10, 13, "[START]");
-        } else if (game_over) {
+        } else if (state == GAME_OVER) {
             mvwprintw(game_window, 10, 11, "[GAME_OVER]");
-        } else if (paused) {
+        } else if (state == PAUSE) {
             mvwprintw(game_window, 10, 13, "[PAUSE]");
         } else {
             for (int i = 0; i < m_height; ++i) {
@@ -433,7 +456,7 @@ private:
 
         delwin(game_window);
 
-        if (playing) { remove_figure_from_field(); }
+        if (state != INITIAL && state != GAME_OVER && state != PAUSE) { remove_figure_from_field(); }
     }
 
 };

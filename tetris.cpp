@@ -214,7 +214,7 @@ private:
             restart_game();
         } else if (key == 'p') {
             state = (state == PAUSE) ? MOVING : PAUSE;
-        } else if (state != PAUSE && state != INITIAL) {
+        } else if (state == MOVING) {
             if (key == 's') {
                 move_figure_down();
             } else if (key == 'a') {
@@ -257,10 +257,25 @@ private:
         ++m_y;
     }
 
+    bool does_figure_fit() {
+        for (int i = 0; i < m_size; ++i) {
+            for (int j = 0; j < m_size; ++j) {
+                int x = m_x + j;
+                int y = m_y + i;
+
+                if (m_figure[i][j] && m_field[y][x]) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     void move_figure_left() {
         --m_x;
 
-        if (!is_figure_in_field()) {
+        if (!is_figure_in_field() || !does_figure_fit()) {
             ++m_x;
         }
     }
@@ -268,7 +283,7 @@ private:
     void move_figure_right() {
         ++m_x;
 
-        if (!is_figure_in_field()) {
+        if (!is_figure_in_field() || !does_figure_fit()) {
             --m_x;
         }
     }
@@ -343,7 +358,9 @@ private:
         if (!is_figure_attached()) {
             m_y += 1;
             state = MOVING;
-        } else {
+        }
+
+        if (is_figure_attached()) {
             state = ATTACHING;
         }
     }

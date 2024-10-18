@@ -17,3 +17,6 @@ can restart, pause, unpause, quit or move figure left, right or down. Every doze
 automatic shifting happens and if falling figure reaches bottom of the playing field or other figures
 attaching happens. If coordinates of the attached figure happens to be at the very top of the playing field
 (y <= 0) game ends.
+
+Found bugs:
+- Falling figures can pass through one black of the figures placed on field -- FIXED

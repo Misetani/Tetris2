@@ -20,3 +20,4 @@ attaching happens. If coordinates of the attached figure happens to be at the ve
 
 Found bugs:
 - Falling figures can pass through one black of the figures placed on field -- FIXED
+- Incorrect memory deallocation for matrices!!!

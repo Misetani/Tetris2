@@ -38,10 +38,10 @@ void create_matrix(int*** matrix, int h, int w) {
 
 void free_matrix(int** matrix, int h) {
     for (int i = 0; i < h; ++i) {
-        delete matrix[i];
+        delete[] matrix[i];
     }
 
-    delete matrix;
+    delete[] matrix;
 }
 
 void print_matrix(int** matrix, int h, int w) {
